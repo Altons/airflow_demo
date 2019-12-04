@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 
 *.sqlite
+*.db
 ./ipynb_checkpoints
 
 .pid
