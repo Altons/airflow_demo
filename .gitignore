@@ -3,7 +3,7 @@
 *.sqlite
 ./ipynb_checkpoints
 
-
+.pid
 __pycache__/
 *.py[cod]
 *$py.class
