@@ -10,7 +10,11 @@ import numpy as np
 import sqlite3 as db
 from bs4 import BeautifulSoup
 import sys
+from shutil import copyfile
 
+
+src = '/Users/anegron/projects/airflow_demo/demo.sqlite'
+dst = '/Users/anegron/projects/rr_demo/demo.sqlite'
 
 default_args = {
     'owner': 'Alberto Negron',
@@ -27,11 +31,16 @@ dag = DAG('source_data', description='Demo for RR interview', default_args=defau
 
 
 def db_conn():
-    return db.connect('/Users/anegron/projects/airflow_demo/demo.sqlite')
+    return db.connect(src)
 
 
 def db_close_conn():
     db_conn().close()
+
+
+def db_copy():
+    copyfile(src, dst)
+    return "DB has been copied to destination"
 
 
 def scrapper(lista):
@@ -85,7 +94,11 @@ t2 = PythonOperator(task_id='process_airlines',
 t3 = PythonOperator(task_id='db_close',
                     python_callable=db_close_conn, retries=0, dag=dag)
 
+t4 = PythonOperator(task_id='db_copy',
+                    python_callable=db_copy, retries=0, dag=dag)
+
 t1
 t2
 t3.set_upstream(t1)
 t3.set_upstream(t2)
+t4.set_upstream(t3)
