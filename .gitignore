@@ -2,8 +2,9 @@
 
 *.sqlite
 *.db
+.DS_Store
 ./ipynb_checkpoints
-
+*.png
 .pid
 __pycache__/
 *.py[cod]

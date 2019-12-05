@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
 # Dependency libraries
 import requests
 import pandas as pd
@@ -41,6 +42,13 @@ def db_close_conn():
 def db_copy():
     copyfile(src, dst)
     return "DB has been copied to destination"
+
+
+def copy_plots():
+    copyfile('/Users/anegron/projects/airflow_demo/airlines_by_country.png',
+             '/Users/anegron/projects/rr_demo/airlines_by_country.png')
+    copyfile('/Users/anegron/projects/airflow_demo/airports_by_country.png',
+             '/Users/anegron/projects/rr_demo/airports_by_country.png')
 
 
 def scrapper(lista):
@@ -88,17 +96,31 @@ def read_airlines():
 t1 = PythonOperator(task_id='run_scrapper',
                     python_callable=run_scrapper, retries=0, dag=dag)
 
-t2 = PythonOperator(task_id='process_airlines',
-                    python_callable=read_airlines, retries=0, dag=dag)
+load_command = "jupyter nbconvert --to notebook --execute /Users/anegron/projects/airflow_demo/scripts/load_flight_info.ipynb"
 
-t3 = PythonOperator(task_id='db_close',
+t2 = BashOperator(task_id='load_flight_data',
+                  bash_command=load_command,
+                  dag=dag)
+
+trns_command = "jupyter nbconvert --to notebook --execute /Users/anegron/projects/airflow_demo/scripts/transform_flight_data.ipynb"
+
+t3 = BashOperator(task_id='transform_flight_data',
+                  bash_command=trns_command,
+                  dag=dag)
+
+t4 = PythonOperator(task_id='copy_plots',
+                    python_callable=copy_plots, retries=0, dag=dag)
+
+t5 = PythonOperator(task_id='db_close',
                     python_callable=db_close_conn, retries=0, dag=dag)
 
-t4 = PythonOperator(task_id='db_copy',
+t6 = PythonOperator(task_id='db_copy',
                     python_callable=db_copy, retries=0, dag=dag)
 
 t1
 t2
-t3.set_upstream(t1)
 t3.set_upstream(t2)
 t4.set_upstream(t3)
+t5.set_upstream(t4)
+t5.set_upstream(t1)
+t6.set_upstream(t5)
